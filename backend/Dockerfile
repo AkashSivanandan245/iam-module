@@ -1,7 +1,6 @@
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
 
-# Install Maven
 RUN apk add --no-cache maven
 
 COPY pom.xml ./
@@ -14,4 +13,6 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=docker"]
+
+ENTRYPOINT ["java", \
+  "-jar", "app.jar"]
