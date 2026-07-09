@@ -71,7 +71,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "https://iam-module.vercel.app"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("X-RateLimit-Limit", "X-RateLimit-Remaining", "Retry-After"));
@@ -91,32 +95,31 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .exceptionHandling(exceptions -> exceptions
-                .authenticationEntryPoint(restAuthEntryPoint)
-                .accessDeniedHandler(restAccessDeniedHandler)
-            )
-            .authorizeHttpRequests(auth -> auth
-                // Allow swagger documentation and openapi endpoints
-                .requestMatchers(
-                    "/v3/api-docs/**",
-                    "/api-docs/**",
-                    "/swagger-ui/**",
-                    "/swagger-ui.html"
-                ).permitAll()
-                // Allow auth endpoints (login, forgot password, verification, etc.)
-                .requestMatchers("/api/v1/auth/**").permitAll()
-                // Deny all other requests by default
-                .anyRequest().authenticated()
-            )
-            // Rate-limit filter runs first so abusive traffic is dropped before any auth work.
-            .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
-            // Register custom JWT authentication filter before username/password checks
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(restAuthEntryPoint)
+                        .accessDeniedHandler(restAccessDeniedHandler)
+                )
+                .authorizeHttpRequests(auth -> auth
+                        // Allow swagger documentation and openapi endpoints
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+                        // Allow auth endpoints (login, forgot password, verification, etc.)
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        // Deny all other requests by default
+                        .anyRequest().authenticated()
+                )
+                // Rate-limit filter runs first so abusive traffic is dropped before any auth work.
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                // Register custom JWT authentication filter before username/password checks
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 }
-
