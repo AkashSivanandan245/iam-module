@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://db:5432/lms_iam
+    username: lms_user
+    password: lms_password
+  
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+  flyway:
+    enabled: true
+    url: jdbc:postgresql://db:5432/lms_iam
+    user: lms_user
+    password: lms_password
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+app:
+  jwt:
+    issuer: xebia-lms
+    expiration: 3600000
+    refresh-expiration: 86400000

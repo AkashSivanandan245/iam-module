@@ -1,0 +1,94 @@
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+
+spring:
+  application:
+    name: xebia-lms-iam
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/lms_iam}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+      password: ${SPRING_REDIS_PASSWORD:}
+      time-to-live: 3600s # Default permissions cache TTL (1 hour)
+
+# LMS Custom Properties
+lms:
+  security:
+    jwt:
+      # Private key path for signing (RS256)
+      private-key-path: ${LMS_JWT_PRIVATE_KEY_PATH:classpath:keys/private.pem}
+      # Public key path for verification (RS256)
+      public-key-path: ${LMS_JWT_PUBLIC_KEY_PATH:classpath:keys/public.pem}
+      # Access token expiration in minutes
+      access-token-expiration-minutes: 15
+      # Refresh token expiration in days
+      refresh-token-expiration-days: 7
+    otp:
+      # OTP validity duration in minutes
+      expiration-minutes: 5
+  # Redis-backed rate limits applied by RateLimitFilter.
+  # Rules are matched in the order listed — put more specific patterns first.
+  rate-limit:
+    enabled: true
+    rules:
+      - name: auth-login
+        path-pattern: /api/v1/auth/login
+        limit: 5
+        window-seconds: 60
+      - name: auth-forgot-password
+        path-pattern: /api/v1/auth/forgot-password
+        limit: 3
+        window-seconds: 60
+      - name: auth-verify-otp
+        path-pattern: /api/v1/auth/verify-otp
+        limit: 5
+        window-seconds: 60
+      - name: auth-reset-password
+        path-pattern: /api/v1/auth/reset-password
+        limit: 5
+        window-seconds: 60
+      - name: auth-refresh
+        path-pattern: /api/v1/auth/refresh
+        limit: 10
+        window-seconds: 60
+  s3:
+    bucket-name: ${LMS_S3_BUCKET:xebia-lms-storage}
+    region: ${LMS_S3_REGION:us-east-1}
+    access-key: ${LMS_S3_ACCESS_KEY:mock-access-key}
+    secret-key: ${LMS_S3_SECRET_KEY:mock-secret-key}
+    endpoint: ${LMS_S3_ENDPOINT:} # Optional for LocalStack or custom S3 provider
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
